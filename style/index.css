@@ -1,15 +1,15 @@
 /* Global Styles & Variables */
 :root {
   /* Color Palette */
-  --primary-color: #007AFF;
-  --primary-hover: #0056b3;
-  --secondary-color: #5856D6;
-  --background-color: #F2F2F7;
+  --primary-color: #FF7B1C;   /* 狐狸橙 */
+  --primary-hover: #E86E18;
+  --secondary-color: #4A90E2; /* 智慧蓝 */
+  --background-color: #FFFFFF; /* 清洁白 */
   --card-background: #FFFFFF;
   --text-primary: #1C1C1E;
   --text-secondary: #8E8E93;
   --border-color: #E5E5EA;
-  --success-color: #34C759;
+  --success-color: #7ED321;   /* 成功绿 */
   --warning-color: #FF9500;
   --danger-color: #FF3B30;
   --shadow-sm: 0 1px 3px rgba(0,0,0,0.1);
@@ -68,7 +68,7 @@ body {
   font-size: 20px;
   font-weight: 600;
   margin: 0;
-  color: var(--text-primary);
+  color: var(--primary-color);
 }
 
 .header-version {
@@ -94,7 +94,7 @@ body {
 }
 
 .nav a:hover, .nav a.active {
-  background-color: rgba(0, 122, 255, 0.1);
+  background-color: rgba(255, 123, 28, 0.08);
   color: var(--primary-color);
 }
 
@@ -275,7 +275,7 @@ button:active {
 }
 
 #checkDuplicate:hover {
-  background-color: #4845B6;
+  background-color: #357ABD;
 }
 
 /* Results */

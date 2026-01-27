@@ -1,6 +1,6 @@
 {
   "manifest_version": 3,
-  "name": "书签清理助手",
+  "name": "灵狐书签",
   "version": "1.0",
   "description": "检测并清理失效和重复的浏览器书签",
   "permissions": [
@@ -12,7 +12,7 @@
     "<all_urls>"
   ],
   "action": {
-    "default_title": "书签清理助手",
+    "default_title": "灵狐书签",
     "default_icon": {
       "16": "icons/icon16.svg",
       "48": "icons/icon48.svg",

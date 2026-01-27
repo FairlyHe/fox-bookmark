@@ -5,7 +5,6 @@ document.addEventListener('DOMContentLoaded', async () => {
   const versionElement = document.getElementById('app-version');
   if (versionElement) {
     const manifest = chrome.runtime.getManifest();
-    console.log('manifest', manifest)
     versionElement.textContent = `v${manifest.version}`;
   }
 
