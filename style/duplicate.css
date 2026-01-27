@@ -1,0 +1,44 @@
+.duplicate-group {
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  margin: 16px 0;
+  padding: 0;
+  background-color: var(--card-background);
+  overflow: hidden;
+}
+
+.group-header {
+  font-size: 14px;
+  color: var(--text-secondary);
+  background-color: #FAFAFC;
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--border-color);
+  font-weight: 500;
+}
+
+.group-header a {
+  color: var(--primary-color);
+  text-decoration: none;
+  word-break: break-all;
+  font-weight: 600;
+}
+
+.group-header a:hover {
+  text-decoration: underline;
+}
+
+.duplicate-group .bookmark-item {
+  margin: 0;
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--border-color);
+  background-color: transparent;
+  border-radius: 0;
+}
+
+.duplicate-group .bookmark-item:last-child {
+  border-bottom: none;
+}
+
+.duplicate-group .bookmark-item:hover {
+  background-color: #F9F9FB;
+}

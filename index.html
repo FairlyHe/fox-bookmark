@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+	<meta charset="UTF-8">
+	<title>书签清理助手</title>
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<link rel="stylesheet" href="style/normalize.css">
+	<link rel="stylesheet" href="style/flex.css">
+	<link rel="stylesheet" href="style/index.css">
+	<link rel="stylesheet" href="style/duplicate.css">
+</head>
+
+<body flex="dir:top">
+	<div class="header">
+		<div class="navbar" flex="main:justify cross:center">
+			<div class="logo" flex="cross:center">
+				<img src="images/logo.jpg" alt="书签清理助手">
+				<h1 class="header-title">书签清理助手</h1>
+			</div>
+			<div class="nav">
+				<a href="#" id="openSettings">
+					<i>⚙️</i>
+					<span>设置</span>
+				</a>
+				<a href="#" id="nav-invalid" class="active">
+					<i>🧹</i>
+					<span>失效书签</span>
+				</a>
+				<a href="#" id="nav-duplicate">
+					<i>🔁</i>
+					<span>重复书签</span>
+				</a>
+			</div>
+		</div>
+	</div>
+
+	<div class="container">
+		<!-- 扫描统计数据 -->
+		<div class="scan-stats-wrapper" flex>
+			<!-- 进度条 -->
+			<div class="progress">
+				<div class="progress-circle">
+					<svg viewBox="0 0 100 100">
+						<circle class="progress-circle-bg" cx="50" cy="50" r="45" />
+						<circle class="progress-circle-fill" cx="50" cy="50" r="45" />
+					</svg>
+					<div class="progress-percentage">0%</div>
+				</div>
+				<!-- <div id="progressText" style="text-align: center; margin-top: 5px;">正在检测中...</div> -->
+			</div>
+			<div class="stats-container" flex-box="1" flex="box:mean">
+				<div>
+					<div>扫描用时</div>
+					<div id="scan-duration">0</div>
+				</div>
+				<div>
+					<div>书签总数</div>
+					<div>
+						<span id="scanned-bookmarks">0</span>/<span id="total-bookmarks">100</span>
+					</div>
+				</div>
+				<div>
+					<div>待确认链接</div>
+					<div id="invalid-links">0</div>
+				</div>
+				<div>
+					<div>空文件夹</div>
+					<div id="empty-folders">0</div>
+				</div>
+			</div>
+		</div>
+
+		<div class="bookmark-stats">
+			<div id="totalBookmarks">总书签数：加载中...</div>
+		</div>
+		<div class="button-group">
+			<button id="checkInvalid">检测失效书签</button>
+			<button id="stopScan" style="display: none; background-color: var(--danger-color);">停止检测</button>
+			<button id="checkDuplicate">检测重复书签</button>
+		</div>
+		<div class="results">
+			<!-- Invalid Bookmarks Tab -->
+		<div id="invalid-tab-content" class="tab-content active">
+			<div id="invalidStatus" class="scan-status" style="display: none;"></div>
+			<div class="select-all">
+				<label>
+					<input type="checkbox" id="selectAllInvalid">
+					全选
+				</label>
+			</div>
+			<div id="invalidList" class="bookmark-list"></div>
+		</div>
+
+			<!-- Duplicate Bookmarks Tab -->
+			<div id="duplicate-tab-content" class="tab-content" style="display: none;">
+				<div class="select-all">
+					<label>
+						<input type="checkbox" id="selectAllDuplicate">
+						全选
+					</label>
+				</div>
+				<div id="duplicateList" class="bookmark-list"></div>
+			</div>
+
+			<!-- 创建预览实例 -->
+			<div class="preview-container" id="preview-container">
+				<div class="preview-header">
+					<span class="preview-title" id="preview-title"></span>
+					<button class="preview-close" id="preview-close">&#x2715;</button>
+				</div>
+				<iframe id="preview-frame" class="preview-frame"></iframe>
+			</div>
+		</div>
+
+		<div class="action-buttons">
+			<button id="deleteSelected">删除选中书签</button>
+			<button id="cancel">取消</button>
+		</div>
+	</div>
+	<div id="settingsModal" class="modal">
+		<div class="modal-content">
+			<div class="modal-header">
+				<h2>扫描设置</h2>
+				<span class="close-modal">&times;</span>
+			</div>
+			<div class="modal-body">
+				<div class="setting-item">
+					<label for="timeoutRange">请求超时时间 (秒)</label>
+					<div class="range-container">
+						<input type="range" id="timeoutRange" min="5" max="60" value="15" step="1">
+						<span id="timeoutValue">15s</span>
+					</div>
+					<p class="setting-desc">建议设置在 10-15 秒之间，时间过短可能导致误判。</p>
+				</div>
+			</div>
+			<div class="modal-footer">
+				<button id="saveSettings">保存</button>
+			</div>
+		</div>
+	</div>
+</body>
+<script src="index.js"></script>
+<script src="js/preview.js"></script>
+
+</html>

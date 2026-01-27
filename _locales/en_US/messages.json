@@ -1,0 +1,44 @@
+{
+  "errorCode_badRequest": {
+    "message": "Bad Request"
+  },
+  "errorCode_unauthorized": {
+    "message": "Unauthorized"
+  },
+  "errorCode_forbidden": {
+    "message": "Forbidden"
+  },
+  "errorCode_notFound": {
+    "message": "Not Found"
+  },
+  "errorCode_methodNotAllowed": {
+    "message": "Method Not Allowed"
+  },
+  "errorCode_notAcceptable": {
+    "message": "Not Acceptable"
+  },
+  "errorCode_requestTimeout": {
+    "message": "Request Timeout"
+  },
+  "errorCode_payloadTooLarge": {
+    "message": "Payload Too Large"
+  },
+  "errorCode_urlTooLong": {
+    "message": "URL Too Long"
+  },
+  "errorCode_tooManyRequests": {
+    "message": "Too Many Requests"
+  },
+  "errorCode_internalServerError": {
+    "message": "Internal Server Error"
+  },
+  "errorCode_badGateway": {
+    "message": "Bad Gateway"
+  },
+  "errorCode_serviceUnavailable": {
+    "message": "Service Unavailable"
+  },
+  "errorCode_gatewayTimeout": {
+    "message": "Gateway Timeout"
+  }
+}

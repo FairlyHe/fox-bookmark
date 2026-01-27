@@ -1,0 +1,47 @@
+{
+  "errorCode_badRequest": {
+    "message": "错误请求"
+  },
+  "errorCode_unauthorized": {
+    "message": "未授权"
+  },
+  "errorCode_forbidden": {
+    "message": "禁止访问"
+  },
+  "errorCode_notFound": {
+    "message": "未找到"
+  },
+  "errorCode_methodNotAllowed": {
+    "message": "方法不允许"
+  },
+  "errorCode_notAcceptable": {
+    "message": "不接受"
+  },
+  "errorCode_requestTimeout": {
+    "message": "请求超时"
+  },
+  "errorCode_payloadTooLarge": {
+    "message": "请求实体过大"
+  },
+  "errorCode_urlTooLong": {
+    "message": "请求的URI过长"
+  },
+  "errorCode_tooManyRequests": {
+    "message": "请求过多"
+  },
+  "errorCode_internalServerError": {
+    "message": "内部服务器错误"
+  },
+  "errorCode_badGateway": {
+    "message": "网关错误"
+  },
+  "errorCode_serviceUnavailable": {
+    "message": "服务不可用"
+  },
+  "errorCode_gatewayTimeout": {
+    "message": "网关超时"
+  },
+  "scanBookmarks": {
+    "message": "扫描书签"
+  }
+}
