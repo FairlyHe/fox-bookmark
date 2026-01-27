@@ -12,6 +12,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   const selectAllInvalid = document.getElementById('selectAllInvalid');
   const selectAllDuplicate = document.getElementById('selectAllDuplicate');
   const deleteSelectedBtn = document.getElementById('deleteSelected');
+  const smartSelectBtn = document.getElementById('smartSelect');
   const cancelBtn = document.getElementById('cancel');
 
   const navInvalid = document.getElementById('nav-invalid');
@@ -32,9 +33,13 @@ document.addEventListener('DOMContentLoaded', async () => {
     if (tab === 'invalid') {
       navInvalid.classList.add('active');
       invalidTabContent.style.display = 'block';
+      smartSelectBtn.style.display = 'none';
     } else if (tab === 'duplicate') {
       navDuplicate.classList.add('active');
       duplicateTabContent.style.display = 'block';
+      // Only show if we have results (actionButtons visible)? 
+      // For now just set it to inline-block, parent visibility controls overall visibility
+      smartSelectBtn.style.display = 'inline-block';
     }
   }
 
@@ -131,14 +136,29 @@ document.addEventListener('DOMContentLoaded', async () => {
     stopScanBtn.style.display = 'inline-flex';
 
     startTime = Date.now();
-    const bookmarks = await chrome.bookmarks.getTree();
-    const allBookmarks = getAllBookmarks(bookmarks);
+    
+    // Get scope
+    const scopeCheckboxes = document.querySelectorAll('input[name="scanScope"]:checked');
+    const selectedIds = Array.from(scopeCheckboxes).map(cb => cb.value);
+    
+    if (selectedIds.length === 0) {
+      alert('请至少选择一个扫描范围');
+      isScanning = false;
+      checkInvalidBtn.style.display = 'inline-flex';
+      stopScanBtn.style.display = 'none';
+      return;
+    }
+
+    const tree = await chrome.bookmarks.getTree();
+    const targets = tree[0].children.filter(node => selectedIds.includes(node.id));
+    const allBookmarks = getAllBookmarks(targets);
 
     currentBookmarks = allBookmarks.filter(b => b.url); // 只保留有URL的书签
 
     progressBar.style.display = 'block';
     resultsContainer.style.display = 'block';
     // 初始化统计数据
+    scannedCount = 0;
     invalidCount = 0;
     emptyFolderCount = 0;
     updateStats();
@@ -151,14 +171,14 @@ document.addEventListener('DOMContentLoaded', async () => {
     invalidList.innerHTML = ''; 
     
     // Detect empty folders
-    const emptyFolders = getEmptyFolders(bookmarks[0].children);
+    const emptyFolders = getEmptyFolders(targets);
     emptyFolderCount = emptyFolders.length;
     
     // Render empty folders first
     for (const folder of emptyFolders) {
         const folderHtml = `
             <div class="bookmark-item">
-              <input type="checkbox" data-id="${folder.id}">
+              <input type="checkbox" data-id="${folder.id}" data-type="folder">
               <div class="bookmark-info">
                 <div class="bookmark-title">📁 ${folder.title}</div>
                 <div class="bookmark-path">${folder.path}</div>
@@ -192,7 +212,7 @@ document.addEventListener('DOMContentLoaded', async () => {
           invalidCount++;
           const bookmarkHtml = `
             <div class="bookmark-item">
-              <input type="checkbox" data-id="${bookmark.id}">
+              <input type="checkbox" data-id="${bookmark.id}" data-type="invalid">
               <div class="bookmark-info">
                 <div class="bookmark-title">${bookmark.title}</div>
                 <div class="bookmark-url">
@@ -254,6 +274,10 @@ document.addEventListener('DOMContentLoaded', async () => {
     const summaryText = `${statusText}，共发现 ${invalidCount} 个失效书签和 ${emptyFolderCount} 个空文件夹（用时：${duration}秒）`;
     invalidStatus.textContent = summaryText;
 
+    if (statusText === '检测完成') {
+      lastInvalidScanId = addScanHistory('invalid', scannedCount, invalidCount + emptyFolderCount, duration);
+    }
+
     if (invalidCount === 0 && emptyFolderCount === 0) {
       // actionButtons.style.display = 'none'; // Keep buttons if other tab has items?
     }
@@ -269,9 +293,26 @@ document.addEventListener('DOMContentLoaded', async () => {
     switchTab('duplicate');
     resetUI();
     startTime = Date.now();
-    const bookmarks = await chrome.bookmarks.getTree();
-    const allBookmarks = getAllBookmarks(bookmarks);
+    
+    // Get scope
+    const scopeCheckboxes = document.querySelectorAll('input[name="scanScope"]:checked');
+    const selectedIds = Array.from(scopeCheckboxes).map(cb => cb.value);
+    
+    if (selectedIds.length === 0) {
+      alert('请至少选择一个扫描范围');
+      return;
+    }
+
+    const tree = await chrome.bookmarks.getTree();
+    const targets = tree[0].children.filter(node => selectedIds.includes(node.id));
+    const allBookmarks = getAllBookmarks(targets);
     currentBookmarks = allBookmarks.filter(b => b.url);
+
+    // 初始化统计数据
+    scannedCount = currentBookmarks.length;
+    invalidCount = 0;
+    emptyFolderCount = 0;
+    updateStats();
 
     progressBar.style.display = 'block';
     const urlMap = new Map();
@@ -295,6 +336,9 @@ document.addEventListener('DOMContentLoaded', async () => {
     updateStats();
     updateProgress(1);
     displayResults(duplicateGroups, '重复', duration);
+
+    const totalFound = duplicateGroups.reduce((acc, group) => acc + group.bookmarks.length, 0);
+    lastDuplicateScanId = addScanHistory('duplicate', scannedCount, totalFound, duration);
   });
 
   // 全选功能
@@ -312,6 +356,28 @@ document.addEventListener('DOMContentLoaded', async () => {
     });
   });
 
+  // 初始化扫描范围
+  async function initScanScope() {
+    try {
+      const tree = await chrome.bookmarks.getTree();
+      const rootChildren = tree[0].children;
+      const container = document.getElementById('scanScopeContainer');
+      
+      let html = '<span class="scope-label">扫描范围：</span>';
+      rootChildren.forEach(node => {
+        html += `
+          <label class="scope-item">
+            <input type="checkbox" name="scanScope" value="${node.id}" checked>
+            ${node.title || '根目录'}
+          </label>
+        `;
+      });
+      container.innerHTML = html;
+    } catch (e) {
+      console.error('Failed to init scan scope', e);
+    }
+  }
+
   // 初始化时获取并显示书签总数
   async function updateTotalBookmarks() {
     const bookmarks = await chrome.bookmarks.getTree();
@@ -322,6 +388,168 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   // 页面加载时获取总数
   updateTotalBookmarks();
+  initScanScope();
+
+  // 获取或创建回收站
+  async function getOrCreateRecycleBin() {
+    const recycleBinTitle = "书签回收站";
+    const searchResults = await chrome.bookmarks.search({ title: recycleBinTitle });
+    const existingFolder = searchResults.find(node => !node.url);
+    
+    if (existingFolder) {
+      return existingFolder.id;
+    } else {
+      // Create it under "Other Bookmarks" (defaults to it if parentId not specified)
+      const newFolder = await chrome.bookmarks.create({
+        title: recycleBinTitle
+      });
+      return newFolder.id;
+    }
+  }
+
+  // 智能保留：每组保留创建时间最早的一个，其余选中
+  smartSelectBtn.addEventListener('click', () => {
+    const groups = document.querySelectorAll('.duplicate-group');
+    let totalChecked = 0;
+
+    groups.forEach(group => {
+      const checkboxes = Array.from(group.querySelectorAll('input[type="checkbox"]'));
+      if (checkboxes.length <= 1) return;
+
+      // Uncheck all first
+      checkboxes.forEach(cb => cb.checked = false);
+
+      // Sort by dateAdded (ascending)
+      checkboxes.sort((a, b) => {
+        const dateA = parseInt(a.dataset.dateAdded) || 0;
+        const dateB = parseInt(b.dataset.dateAdded) || 0;
+        return dateA - dateB;
+      });
+
+      // Check all except the first one (earliest)
+      for (let i = 1; i < checkboxes.length; i++) {
+        checkboxes[i].checked = true;
+        totalChecked++;
+      }
+    });
+    
+    alert(`已智能勾选 ${totalChecked} 个重复项（保留每组最早创建的书签）`);
+  });
+
+  // History Management
+  const historyModal = document.getElementById('historyModal');
+  const openHistoryBtn = document.getElementById('openHistory');
+  const closeHistoryBtn = document.querySelector('.close-history');
+  const historyList = document.getElementById('historyList');
+  const clearHistoryBtn = document.getElementById('clearHistory');
+
+  let scanHistory = [];
+  try {
+    scanHistory = JSON.parse(localStorage.getItem('scanHistory') || '[]');
+  } catch (e) {
+    scanHistory = [];
+  }
+  
+  let lastInvalidScanId = null;
+  let lastDuplicateScanId = null;
+
+  function addScanHistory(type, total, found, duration) {
+    const id = Date.now();
+    const record = {
+      id: id,
+      date: new Date().toLocaleString(),
+      type: type, // 'invalid' or 'duplicate'
+      total: total,
+      found: found,
+      cleaned: 0,
+      duration: duration
+    };
+    scanHistory.unshift(record);
+    // Limit history size
+    if (scanHistory.length > 50) scanHistory.pop();
+    localStorage.setItem('scanHistory', JSON.stringify(scanHistory));
+    return id;
+  }
+
+  function updateHistoryCleaned(scanId, count) {
+    if (!scanId) return;
+    const index = scanHistory.findIndex(item => item.id === scanId);
+    if (index !== -1) {
+      scanHistory[index].cleaned += count;
+      localStorage.setItem('scanHistory', JSON.stringify(scanHistory));
+    }
+  }
+  
+  function renderHistory() {
+    if (scanHistory.length === 0) {
+      historyList.innerHTML = '<div style="text-align:center; padding: 20px; color: var(--text-secondary);">暂无扫描记录</div>';
+      return;
+    }
+    
+    historyList.innerHTML = scanHistory.map(item => `
+      <div class="history-item">
+        <div class="history-date">${item.date}</div>
+        <div class="history-detail">
+          <span>
+            <strong>${item.type === 'invalid' ? '失效检测' : '重复检测'}</strong>
+            <span style="color: var(--text-secondary); margin-left: 8px;">(${item.duration}s)</span>
+          </span>
+          <span>
+            <span style="color: var(--text-secondary);">扫描: ${item.total}</span>
+            <span style="margin: 0 8px; color: ${item.found > 0 ? 'var(--danger-color)' : 'var(--success-color)'};">发现: ${item.found}</span>
+            <span style="color: var(--primary-color);">清理: ${item.cleaned}</span>
+          </span>
+        </div>
+      </div>
+    `).join('');
+  }
+
+  if (openHistoryBtn) {
+    openHistoryBtn.addEventListener('click', (e) => {
+      e.preventDefault();
+      renderHistory();
+      historyModal.style.display = 'block';
+    });
+  }
+
+  if (closeHistoryBtn) {
+    closeHistoryBtn.addEventListener('click', () => {
+      historyModal.style.display = 'none';
+    });
+  }
+  
+  if (clearHistoryBtn) {
+    clearHistoryBtn.addEventListener('click', () => {
+      if(confirm('确定要清空所有历史记录吗？')) {
+        scanHistory = [];
+        localStorage.removeItem('scanHistory');
+        renderHistory();
+      }
+    });
+  }
+
+  // Shortcuts
+  document.addEventListener('keydown', (e) => {
+    // Alt + I : Invalid Scan
+    if (e.altKey && (e.code === 'KeyI' || e.key === 'i')) {
+        e.preventDefault();
+        if (checkInvalidBtn && checkInvalidBtn.offsetParent !== null) {
+            checkInvalidBtn.click();
+        }
+    }
+    // Alt + D : Duplicate Scan
+    if (e.altKey && (e.code === 'KeyD' || e.key === 'd')) {
+        e.preventDefault();
+        if (checkDuplicateBtn) checkDuplicateBtn.click();
+    }
+    // Alt + Delete : Delete Selected
+    if (e.altKey && (e.code === 'Delete' || e.code === 'Backspace')) {
+        e.preventDefault();
+        if (actionButtons && actionButtons.style.display !== 'none') {
+            deleteSelectedBtn.click();
+        }
+    }
+  });
 
   // 删除选中的书签
   deleteSelectedBtn.addEventListener('click', async () => {
@@ -334,56 +562,77 @@ document.addEventListener('DOMContentLoaded', async () => {
       selectAllBox = selectAllDuplicate;
     }
 
-    const selectedBookmarks = Array.from(currentList.querySelectorAll('input[type="checkbox"]:checked'));
-    const selectedIds = selectedBookmarks.map(checkbox => checkbox.dataset.id);
+    const selectedCheckboxes = Array.from(currentList.querySelectorAll('input[type="checkbox"]:checked'));
+    if (selectedCheckboxes.length === 0) {
+      alert('请先选择要处理的项目');
+      return;
+    }
 
-    // 从DOM中移除选中的书签项
-    selectedBookmarks.forEach(checkbox => {
-      const bookmarkItem = checkbox.closest('.bookmark-item');
-      bookmarkItem.remove();
+    const itemsToDelete = selectedCheckboxes.map(checkbox => ({
+      id: checkbox.dataset.id,
+      type: checkbox.dataset.type || 'bookmark',
+      checkbox
+    }));
+
+    // 获取或创建回收站
+    const recycleBinId = await getOrCreateRecycleBin();
+
+    // 从DOM中移除选中的书签项，并更新计数
+    itemsToDelete.forEach(item => {
+      const bookmarkItem = item.checkbox.closest('.bookmark-item');
+      if (bookmarkItem) {
+        bookmarkItem.remove();
+      }
+
+      if (currentTab === 'invalid') {
+        if (item.type === 'folder') {
+          emptyFolderCount = Math.max(0, emptyFolderCount - 1);
+        } else if (item.type === 'invalid') {
+          invalidCount = Math.max(0, invalidCount - 1);
+        }
+      }
     });
 
-    // 从Chrome书签中删除
-    for (const id of selectedIds) {
+    // 移动到回收站
+    let successCount = 0;
+    for (const item of itemsToDelete) {
       try {
-        await chrome.bookmarks.remove(id);
+        if (item.id === recycleBinId) continue;
+        await chrome.bookmarks.move(item.id, { parentId: recycleBinId });
+        successCount++;
       } catch (e) {
-        console.error('Delete failed', e);
+        console.error('Move to recycle bin failed', e);
       }
-      // 从currentBookmarks中移除对应的书签 (Only relevant for invalid/duplicate logic using currentBookmarks)
-      const index = currentBookmarks.findIndex(b => b.id === id);
+      
+      // 从currentBookmarks中移除对应的书签
+      const index = currentBookmarks.findIndex(b => b.id === item.id);
       if (index !== -1) {
         currentBookmarks.splice(index, 1);
       }
     }
 
-    // 更新进度条和统计信息
-    const summaryElement = currentList.firstElementChild;
     const duration = ((Date.now() - startTime) / 1000).toFixed(1);
 
-    if (summaryElement) {
-      if (currentTab === 'invalid') {
-        const remainingCount = currentList.querySelectorAll('.bookmark-item').length - 1; // 减去summary行
-        summaryElement.innerHTML = `检测完成，共发现 ${remainingCount} 个失效书签（用时：${duration}秒）`;
-      } else if (currentTab === 'duplicate') {
-        // 清理空组
-        const groups = currentList.querySelectorAll('.duplicate-group');
-        groups.forEach(group => {
-          if (group.querySelectorAll('.bookmark-item').length === 0) {
-            group.remove();
-          }
-        });
-        const remainingGroups = currentList.querySelectorAll('.duplicate-group').length;
+    if (currentTab === 'duplicate') {
+      // 清理空组
+      const groups = currentList.querySelectorAll('.duplicate-group');
+      groups.forEach(group => {
+        if (group.querySelectorAll('.bookmark-item').length === 0) {
+          group.remove();
+        }
+      });
+      const remainingGroups = currentList.querySelectorAll('.duplicate-group').length;
+      const summaryElement = currentList.firstElementChild;
+      if (summaryElement) {
         summaryElement.innerHTML = `检测完成，发现 ${remainingGroups} 组重复书签（用时：${duration}秒）`;
       }
     }
 
-    // 如果没有剩余的失效书签，隐藏操作按钮
-    // if (remainingInvalidCount === 0) {
-    //   actionButtons.style.display = 'none';
-    // }
-
-    alert(`已成功删除 ${selectedIds.length} 个项目`);
+    updateStats();
+    
+    const scanId = currentTab === 'invalid' ? lastInvalidScanId : lastDuplicateScanId;
+    updateHistoryCleaned(scanId, successCount);
+    alert(`已成功移动 ${successCount} 个项目到“书签回收站”`);
     selectAllBox.checked = false;
   });
 
@@ -467,7 +716,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             ${group.bookmarks
             .map(bookmark => `
                 <div class="bookmark-item">
-                  <input type="checkbox" data-id="${bookmark.id}">
+                  <input type="checkbox" data-id="${bookmark.id}" data-date-added="${bookmark.dateAdded || 0}">
                   <div class="bookmark-info">
                     <div class="bookmark-title">${bookmark.title}</div>
                     <div class="bookmark-path">${bookmark.path.replace(/>[^>]*$/, '')}</div>
@@ -521,6 +770,9 @@ document.addEventListener('DOMContentLoaded', async () => {
   window.addEventListener('click', (e) => {
     if (e.target === settingsModal) {
       settingsModal.style.display = 'none';
+    }
+    if (e.target === historyModal) {
+      historyModal.style.display = 'none';
     }
   });
 
