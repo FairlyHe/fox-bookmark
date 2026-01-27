@@ -1,5 +1,14 @@
 document.addEventListener('DOMContentLoaded', async () => {
   const totalBookmarksElement = document.getElementById('totalBookmarks');
+  
+  // Display Version
+  const versionElement = document.getElementById('app-version');
+  if (versionElement) {
+    const manifest = chrome.runtime.getManifest();
+    console.log('manifest', manifest)
+    versionElement.textContent = `v${manifest.version}`;
+  }
+
   const checkInvalidBtn = document.getElementById('checkInvalid');
   const stopScanBtn = document.getElementById('stopScan');
   const checkDuplicateBtn = document.getElementById('checkDuplicate');
@@ -14,6 +23,17 @@ document.addEventListener('DOMContentLoaded', async () => {
   const deleteSelectedBtn = document.getElementById('deleteSelected');
   const smartSelectBtn = document.getElementById('smartSelect');
   const cancelBtn = document.getElementById('cancel');
+
+  let restoreMap = {};
+  try {
+    restoreMap = JSON.parse(localStorage.getItem('restoreMap') || '{}');
+  } catch (e) {
+    restoreMap = {};
+  }
+
+  function saveRestoreMap() {
+    localStorage.setItem('restoreMap', JSON.stringify(restoreMap));
+  }
 
   const navInvalid = document.getElementById('nav-invalid');
   const navDuplicate = document.getElementById('nav-duplicate');
@@ -181,6 +201,7 @@ document.addEventListener('DOMContentLoaded', async () => {
               <input type="checkbox" data-id="${folder.id}" data-type="folder">
               <div class="bookmark-info">
                 <div class="bookmark-title">📁 ${folder.title}</div>
+                <div class="bookmark-url"></div>
                 <div class="bookmark-path">${folder.path}</div>
                 <div class="bookmark-state state-invalid">空文件夹</div>
               </div>
@@ -598,6 +619,22 @@ document.addEventListener('DOMContentLoaded', async () => {
     for (const item of itemsToDelete) {
       try {
         if (item.id === recycleBinId) continue;
+
+        // Save restore info
+        try {
+            const [node] = await chrome.bookmarks.get(item.id);
+            if (node) {
+                restoreMap[item.id] = {
+                    id: item.id,
+                    parentId: node.parentId,
+                    index: node.index,
+                    dateDeleted: Date.now()
+                };
+            }
+        } catch (err) {
+            console.warn('Failed to get bookmark info for restore', err);
+        }
+
         await chrome.bookmarks.move(item.id, { parentId: recycleBinId });
         successCount++;
       } catch (e) {
@@ -610,6 +647,8 @@ document.addEventListener('DOMContentLoaded', async () => {
         currentBookmarks.splice(index, 1);
       }
     }
+
+    saveRestoreMap();
 
     const duration = ((Date.now() - startTime) / 1000).toFixed(1);
 
@@ -719,7 +758,9 @@ document.addEventListener('DOMContentLoaded', async () => {
                   <input type="checkbox" data-id="${bookmark.id}" data-date-added="${bookmark.dateAdded || 0}">
                   <div class="bookmark-info">
                     <div class="bookmark-title">${bookmark.title}</div>
+                    <div class="bookmark-url"><a target="_blank" href="${bookmark.url}">${bookmark.url}</a></div>
                     <div class="bookmark-path">${bookmark.path.replace(/>[^>]*$/, '')}</div>
+                    <div class="bookmark-state">重复</div>
                   </div>
                 </div>
               `)
@@ -767,12 +808,119 @@ document.addEventListener('DOMContentLoaded', async () => {
     settingsModal.style.display = 'none';
   });
 
+  // Recycle Bin Logic
+  const recycleBinModal = document.getElementById('recycleBinModal');
+  const openRecycleBinBtn = document.getElementById('openRecycleBin');
+  const closeRecycleBtn = document.querySelector('.close-recycle');
+  const recycleList = document.getElementById('recycleList');
+  const restoreSelectedBtn = document.getElementById('restoreSelected');
+  const emptyRecycleBinBtn = document.getElementById('emptyRecycleBin');
+
+  async function renderRecycleBin() {
+    const recycleBinId = await getOrCreateRecycleBin();
+    const children = await chrome.bookmarks.getChildren(recycleBinId);
+    
+    if (children.length === 0) {
+      recycleList.innerHTML = '<div style="text-align:center; padding: 20px; color: var(--text-secondary);">回收站是空的</div>';
+      return;
+    }
+
+    recycleList.innerHTML = children.map(item => `
+      <div class="bookmark-item">
+        <input type="checkbox" data-id="${item.id}">
+        <div class="bookmark-info">
+          <div class="bookmark-title">${item.title}</div>
+          <div class="bookmark-url">
+            <a target="_blank" href="${item.url}">${item.url || '文件夹'}</a>
+          </div>
+          <div class="bookmark-path" style="font-size: 11px; margin-top: 2px; color: var(--text-secondary);">
+             ${restoreMap[item.id] ? '原位置已记录 (可还原)' : '原位置未知 (将还原到“其他书签”)'}
+          </div>
+        </div>
+      </div>
+    `).join('');
+  }
+
+  if (openRecycleBinBtn) {
+    openRecycleBinBtn.addEventListener('click', async (e) => {
+      e.preventDefault();
+      await renderRecycleBin();
+      recycleBinModal.style.display = 'block';
+    });
+  }
+
+  if (closeRecycleBtn) {
+    closeRecycleBtn.addEventListener('click', () => {
+      recycleBinModal.style.display = 'none';
+    });
+  }
+
+  if (restoreSelectedBtn) {
+    restoreSelectedBtn.addEventListener('click', async () => {
+      const checkboxes = Array.from(recycleList.querySelectorAll('input[type="checkbox"]:checked'));
+      if (checkboxes.length === 0) {
+        alert('请先选择要恢复的项目');
+        return;
+      }
+
+      let successCount = 0;
+      for (const checkbox of checkboxes) {
+        const id = checkbox.dataset.id;
+        const meta = restoreMap[id];
+        
+        try {
+          if (meta && meta.parentId) {
+             try {
+                await chrome.bookmarks.move(id, { parentId: meta.parentId });
+             } catch (err) {
+                 console.warn('Restore to original parent failed, trying default', err);
+                 // Fallback or skip
+                 continue; 
+             }
+          } else {
+             // No meta, try to move to "Other Bookmarks" if possible, but for now skip
+             continue;
+          }
+          
+          successCount++;
+          delete restoreMap[id];
+        } catch (e) {
+          console.error('Restore failed', e);
+        }
+      }
+      saveRestoreMap();
+      await renderRecycleBin();
+      alert(`已成功恢复 ${successCount} 个项目`);
+    });
+  }
+
+  if (emptyRecycleBinBtn) {
+    emptyRecycleBinBtn.addEventListener('click', async () => {
+      if (!confirm('确定要清空回收站吗？此操作无法撤销！')) return;
+      
+      const recycleBinId = await getOrCreateRecycleBin();
+      const children = await chrome.bookmarks.getChildren(recycleBinId);
+      
+      for (const child of children) {
+        await chrome.bookmarks.removeTree(child.id);
+        if (restoreMap[child.id]) {
+          delete restoreMap[child.id];
+        }
+      }
+      saveRestoreMap();
+      await renderRecycleBin();
+    });
+  }
+
   window.addEventListener('click', (e) => {
     if (e.target === settingsModal) {
       settingsModal.style.display = 'none';
     }
     if (e.target === historyModal) {
       historyModal.style.display = 'none';
+    }
+    if (e.target === recycleBinModal) {
+      recycleBinModal.style.display = 'none';
     }
   });
 

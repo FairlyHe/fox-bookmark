@@ -17,6 +17,7 @@
 			<div class="logo" flex="cross:center">
 				<img src="images/logo.jpg" alt="书签清理助手">
 				<h1 class="header-title">书签清理助手</h1>
+				<span id="app-version" class="header-version"></span>
 			</div>
 			<div class="nav">
 				<a href="#" id="openSettings">
@@ -26,6 +27,10 @@
 				<a href="#" id="openHistory">
 					<i>📜</i>
 					<span>历史</span>
+				</a>
+				<a href="#" id="openRecycleBin">
+					<i>♻️</i>
+					<span>回收站</span>
 				</a>
 				<a href="#" id="nav-invalid" class="active">
 					<i>🧹</i>
@@ -109,15 +114,6 @@
 				</div>
 				<div id="duplicateList" class="bookmark-list"></div>
 			</div>
-
-			<!-- 创建预览实例 -->
-			<div class="preview-container" id="preview-container">
-				<div class="preview-header">
-					<span class="preview-title" id="preview-title"></span>
-					<button class="preview-close" id="preview-close">&#x2715;</button>
-				</div>
-				<iframe id="preview-frame" class="preview-frame"></iframe>
-			</div>
 		</div>
 
 		<div class="action-buttons">
@@ -141,6 +137,23 @@
 					</div>
 					<p class="setting-desc">建议设置在 10-15 秒之间，时间过短可能导致误判。</p>
 				</div>
+				<div class="setting-item">
+					<label>快捷键</label>
+					<div class="shortcut-list">
+						<div class="shortcut-item">
+							<span>失效书签检测</span>
+							<span class="kbd">Alt + I</span>
+						</div>
+						<div class="shortcut-item">
+							<span>重复书签检测</span>
+							<span class="kbd">Alt + D</span>
+						</div>
+						<div class="shortcut-item">
+							<span>删除选中书签</span>
+							<span class="kbd">Alt + Del</span>
+						</div>
+					</div>
+				</div>
 			</div>
 			<div class="modal-footer">
 				<button id="saveSettings">保存</button>
@@ -163,6 +176,36 @@
 				</div>
 			</div>
 		</div>
+	</div>
+
+	<div id="recycleBinModal" class="modal">
+		<div class="modal-content" style="max-width: 700px;">
+			<div class="modal-header">
+				<h2>书签回收站</h2>
+				<span class="close-modal close-recycle">&times;</span>
+			</div>
+			<div class="modal-body">
+				<div style="margin-bottom: 15px; font-size: 13px; color: var(--text-secondary);">
+					<p>这里显示“书签回收站”文件夹中的所有内容。您可以将它们恢复到原来的位置。</p>
+				</div>
+				<div id="recycleList" class="bookmark-list" style="height: 400px;">
+					<!-- Items -->
+				</div>
+				<div style="text-align: center; margin-top: 15px; display: flex; justify-content: flex-end; gap: 10px;">
+					<button id="restoreSelected" style="background-color: var(--success-color);">恢复选中</button>
+					<button id="emptyRecycleBin" style="background-color: var(--danger-color);">清空回收站</button>
+				</div>
+			</div>
+		</div>
+	</div>
+
+	<!-- 创建预览实例 (Moved outside container) -->
+	<div class="preview-container" id="preview-container">
+		<div class="preview-header">
+			<span class="preview-title" id="preview-title"></span>
+			<button class="preview-close" id="preview-close">&#x2715;</button>
+		</div>
+		<iframe id="preview-frame" class="preview-frame"></iframe>
 	</div>
 </body>
 <script src="index.js"></script>
