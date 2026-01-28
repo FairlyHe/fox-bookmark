@@ -14,17 +14,17 @@
   "action": {
     "default_title": "灵狐书签",
     "default_icon": {
-      "16": "icons/icon16.svg",
-      "48": "icons/icon48.svg",
-      "128": "icons/icon128.svg"
+      "16": "favicon-16x16.png",
+      "48": "favicon-32x32.png",
+      "128": "android-chrome-192x192.png"
     }
   },
   "background": {
     "service_worker": "background.js"
   },
   "icons": {
-    "16": "icons/icon16.svg",
-    "48": "icons/icon48.svg",
-    "128": "icons/icon128.svg"
+    "16": "favicon-16x16.png",
+    "48": "favicon-32x32.png",
+    "128": "android-chrome-192x192.png"
   }
 }
