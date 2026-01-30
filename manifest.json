@@ -1,11 +1,12 @@
 {
   "manifest_version": 3,
   "name": "灵狐书签",
-  "version": "1.0",
+  "version": "1.0.1",
   "description": "检测并清理失效和重复的浏览器书签",
   "permissions": [
     "bookmarks",
-    "tabs"
+    "tabs",
+    "history"
   ],
   "default_locale": "zh_CN",
   "host_permissions": [

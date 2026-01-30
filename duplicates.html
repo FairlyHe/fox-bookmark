@@ -24,11 +24,11 @@
 				<span id="app-version" class="header-version"></span>
 			</div>
 			<div class="nav">
-				<a href="#" id="nav-invalid" class="active">
+				<a href="index.html" id="nav-invalid">
 					<i>🧹</i>
 					<span data-i18n="invalidBookmarks">失效书签</span>
 				</a>
-				<a href="duplicates.html" id="nav-duplicate">
+				<a href="#" id="nav-duplicate" class="active">
 					<i>🔁</i>
 					<span data-i18n="duplicateBookmarks">重复书签</span>
 				</a>
@@ -63,17 +63,6 @@
 	<div class="container">
 		<!-- 扫描统计数据 -->
 		<div class="scan-stats-wrapper" flex>
-			<!-- 进度条 -->
-			<div class="progress">
-				<div class="progress-circle">
-					<svg viewBox="0 0 100 100">
-						<circle class="progress-circle-bg" cx="50" cy="50" r="45" />
-						<circle class="progress-circle-fill" cx="50" cy="50" r="45" />
-					</svg>
-					<div class="progress-percentage">0%</div>
-				</div>
-				<!-- <div id="progressText" style="text-align: center; margin-top: 5px;">正在检测中...</div> -->
-			</div>
 			<div class="stats-container" flex-box="1" flex="box:mean">
 				<div>
 					<div data-i18n="scanTime">扫描用时</div>
@@ -86,12 +75,12 @@
 					</div>
 				</div>
 				<div>
-					<div data-i18n="invalidLinks">待确认链接</div>
-					<div id="invalid-links">0</div>
+					<div data-i18n="duplicateUrls">重复网址</div>
+					<div id="duplicate-urls">0</div>
 				</div>
 				<div>
-					<div data-i18n="emptyFolders">空文件夹</div>
-					<div id="empty-folders">0</div>
+					<div data-i18n="duplicateBookmarks">重复书签</div>
+					<div id="duplicate-bookmarks">0</div>
 				</div>
 			</div>
 		</div>
@@ -103,28 +92,27 @@
             <!-- Dynamically populated -->
         </div>
 		<div class="button-group">
-			<button id="checkInvalid" data-i18n="checkInvalid">检测失效书签</button>
-			<button id="stopScan" style="display: none; background-color: var(--danger-color);" data-i18n="stopScan">停止检测</button>
+			<button id="checkDuplicate" data-i18n="checkDuplicate">检测重复书签</button>
 		</div>
 		<div class="results">
-			<!-- Invalid Bookmarks Tab -->
-			<div id="invalid-tab-content" class="tab-content active">
+			<!-- Duplicate Bookmarks Tab -->
+			<div id="duplicate-tab-content" class="tab-content" style="display: block;">
 				<div class="select-all">
 					<label>
-						<input type="checkbox" id="selectAllInvalid">
+						<input type="checkbox" id="selectAllDuplicate">
 						<span data-i18n="selectAll">全选</span>
 					</label>
 				</div>
-				<div id="invalidList" class="bookmark-list"></div>
+				<div id="duplicateList" class="bookmark-list"></div>
 			</div>
 		</div>
 
 		<div class="action-buttons">
+			<button id="smartSelect" style="display: none;" data-i18n="smartKeep">智能保留</button>
 			<button id="deleteSelected" data-i18n="deleteSelected">删除选中书签</button>
 			<button id="cancel" data-i18n="cancel">取消</button>
 		</div>
 	</div>
-
 
 	<!-- 创建预览实例 (Moved outside container) -->
 	<div class="preview-container" id="preview-container">
@@ -134,11 +122,12 @@
 		</div>
 		<iframe id="preview-frame" class="preview-frame"></iframe>
 	</div>
+
+	<script src="js/locales.js"></script>
+	<script src="js/i18n.js"></script>
+	<script src="js/common.js"></script>
+	<script src="js/duplicates.js"></script>
+	<script src="js/preview.js"></script>
 </body>
-<script src="js/locales.js"></script>
-<script src="js/i18n.js"></script>
-<script src="js/common.js"></script>
-<script src="js/index.js"></script>
-<script src="js/preview.js"></script>
 
 </html>

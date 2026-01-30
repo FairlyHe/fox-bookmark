@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+	<meta charset="UTF-8">
+	<title data-i18n="analysis">分析与洞察</title>
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<link rel="stylesheet" href="style/normalize.css">
+	<link rel="stylesheet" href="style/flex.css">
+	<link rel="stylesheet" href="style/index.css">
+	<link rel="stylesheet" href="style/analytics.css">
+	<link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
+	<link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
+	<link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png">
+	<link rel="manifest" href="/site.webmanifest">
+</head>
+
+<body flex="dir:top">
+	<div class="header">
+		<div class="navbar" flex="main:justify cross:center">
+			<div class="logo" flex="cross:center">
+				<img src="images/logo.png" alt="灵狐书签">
+				<h1 class="header-title" data-i18n="appName">灵狐书签</h1>
+				<span id="app-version" class="header-version"></span>
+			</div>
+			<div class="nav">
+				<a href="index.html" id="nav-invalid">
+					<i>🧹</i>
+					<span data-i18n="invalidBookmarks">失效书签</span>
+				</a>
+				<a href="duplicates.html" id="nav-duplicate">
+					<i>🔁</i>
+					<span data-i18n="duplicateBookmarks">重复书签</span>
+				</a>
+				<a href="#" id="nav-analysis" class="active">
+					<i>📊</i>
+					<span data-i18n="analysis">分析与洞察</span>
+				</a>
+				<div class="nav-dropdown">
+					<a href="javascript:void(0);" class="nav-dropdown-toggle">
+						<i>⚙️</i>
+						<span data-i18n="settings">设置</span>
+					</a>
+					<div class="nav-dropdown-menu">
+						<a href="#" id="openHistory">
+							<i>📜</i>
+							<span data-i18n="history">历史</span>
+						</a>
+						<a href="#" id="openRecycleBin">
+							<i>♻️</i>
+							<span data-i18n="recycleBin">回收站</span>
+						</a>
+						<a href="#" id="openSettings">
+							<i>⚙️</i>
+							<span data-i18n="settings">设置</span>
+						</a>
+					</div>
+				</div>
+			</div>
+		</div>
+	</div>
+
+	<div class="container analytics-container">
+        <!-- Dashboard Header -->
+        <div class="dashboard-header" flex="main:justify cross:center">
+            <h2 data-i18n="analysis">分析与洞察</h2>
+            <button id="runAnalysis" class="primary-btn" data-i18n="runAnalysis">开始分析</button>
+        </div>
+
+        <!-- Health Score Section -->
+        <div class="card health-card">
+            <h3 data-i18n="healthScore">健康度评分</h3>
+            <div class="health-score-display" flex="cross:center main:center">
+                <div class="score-circle">
+                    <span id="healthScoreValue">--</span>
+                    <span class="score-label" id="healthScoreLabel" data-i18n="score">得分</span>
+                </div>
+                <div class="health-details">
+                    <div class="health-status" id="healthStatusText">--</div>
+                    <div class="health-metrics">
+                        <div class="metric">
+                            <span data-i18n="invalidBookmarks">失效书签</span>: <span id="metricInvalid">--</span>
+                        </div>
+                        <div class="metric">
+                            <span data-i18n="duplicateBookmarks">重复书签</span>: <span id="metricDuplicate">--</span>
+                        </div>
+                         <div class="metric">
+                            <span data-i18n="emptyFolders">空文件夹</span>: <span id="metricEmpty">--</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Usage Statistics Section -->
+        <div class="grid-row">
+            <div class="card usage-card" flex-box="1">
+                <h3 data-i18n="mostUsed">最常访问</h3>
+                <ul id="mostUsedList" class="simple-list">
+                    <!-- Populated by JS -->
+                    <li class="loading-placeholder" data-i18n="loading">加载中...</li>
+                </ul>
+            </div>
+            <div class="card usage-card" flex-box="1">
+                <h3 data-i18n="zombieBookmarks">僵尸书签</h3>
+                <ul id="zombieList" class="simple-list">
+                    <!-- Populated by JS -->
+                    <li class="loading-placeholder" data-i18n="loading">加载中...</li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- Distribution Charts -->
+        <div class="grid-row">
+            <div class="card chart-card" flex-box="1">
+                <h3 data-i18n="timeDistribution">添加时间分布</h3>
+                <div id="timeChart" class="chart-container"></div>
+            </div>
+            <div class="card chart-card" flex-box="1">
+                <h3 data-i18n="domainDistribution">域名分布</h3>
+                <div id="domainChart" class="chart-container"></div>
+            </div>
+        </div>
+
+        <!-- Trends Section -->
+        <div class="card trends-card">
+            <h3 data-i18n="trends">趋势报告</h3>
+             <div class="trends-content" flex>
+                <div class="trend-item" flex-box="1">
+                    <div class="trend-title" data-i18n="totalBookmarks">书签总数</div>
+                    <div class="trend-value" id="trendTotal">--</div>
+                    <div class="trend-change" id="trendTotalChange">--</div>
+                </div>
+                <div class="trend-item" flex-box="1">
+                    <div class="trend-title" data-i18n="invalidBookmarks">失效书签</div>
+                    <div class="trend-value" id="trendInvalid">--</div>
+                    <div class="trend-change" id="trendInvalidChange">--</div>
+                </div>
+                 <div class="trend-item" flex-box="1">
+                    <div class="trend-title" data-i18n="duplicateBookmarks">重复书签</div>
+                    <div class="trend-value" id="trendDuplicate">--</div>
+                    <div class="trend-change" id="trendDuplicateChange">--</div>
+                </div>
+            </div>
+             <div class="last-scan-info">
+                <span data-i18n="lastScan">上次分析</span>: <span id="lastScanTime">--</span>
+            </div>
+        </div>
+
+	</div>
+
+	<script src="js/locales.js"></script>
+	<script src="js/i18n.js"></script>
+    <script src="js/common.js"></script>
+	<script src="js/analytics.js"></script>
+</body>
+
+</html>
